@@ -74,7 +74,7 @@ function NavigationBar() {
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm border border-yellow-300/30 rounded-full text-yellow-200 hover:from-yellow-500/30 hover:to-orange-500/30 hover:border-yellow-300/50 transition-all duration-300 glow-button group"
           >
             <Crown size={18} className="group-hover:rotate-12 transition-transform duration-300" />
-            <span className="font-cursive text-sm">✨ Premium</span>
+            <span className="font-cursive text-sm hidden sm:inline">✨ Premium</span>
           </button>
 
           {/* Notification Bell */}
@@ -97,47 +97,6 @@ function NavigationBar() {
             </button>
           ) : (
             <LoginButton hideUsername={true} />
-          )}
-        </div>
-      </div>
-
-      {/* Bottom Task Bar for Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden bg-white/5 backdrop-blur-sm border-t border-white/10 p-4">
-        <div className="flex items-center justify-around max-w-md mx-auto">
-          {/* Home */}
-          <button
-            onClick={goHome}
-            className="p-3 bg-white/10 backdrop-blur-sm border border-indigo-300/30 rounded-full text-indigo-200 hover:bg-white/20 hover:border-indigo-300/50 transition-all duration-300 glow-button"
-            title="Go Home"
-          >
-            <Home size={20} />
-          </button>
-
-          {/* Premium */}
-          <button
-            onClick={() => navigate('/premium')}
-            className="p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm border border-yellow-300/30 rounded-full text-yellow-200 hover:from-yellow-500/30 hover:to-orange-500/30 hover:border-yellow-300/50 transition-all duration-300 glow-button"
-          >
-            <Crown size={20} />
-          </button>
-
-          {/* Profile/Login */}
-          {isAuthenticated ? (
-            <button
-              onClick={goToProfile}
-              className="relative p-3 bg-white/10 backdrop-blur-sm border border-purple-300/30 rounded-full text-purple-200 hover:bg-white/20 hover:border-purple-300/50 transition-all duration-300 glow-button"
-              title="Profile"
-            >
-              <User size={20} />
-              {/* Premium Badge */}
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                <Crown size={8} className="text-white" />
-              </div>
-            </button>
-          ) : (
-            <div className="p-3">
-              <LoginButton hideUsername={true} />
-            </div>
           )}
         </div>
       </div>
