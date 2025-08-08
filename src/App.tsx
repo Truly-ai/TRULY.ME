@@ -336,7 +336,7 @@ function App() {
   };
 
   // DEBUG: Force badge to show on all pages with full opacity
-  const showBoltBadge = true;
+  const showBoltBadge = false;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 flex flex-col">
