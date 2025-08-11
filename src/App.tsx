@@ -458,24 +458,6 @@ function App() {
                   <LoginButton />
                   
                   <button
-                    onClick={startJudgeFlow}
-                    disabled={isJudgeLoading}
-                    className="w-full flex items-center justify-center gap-3 py-3 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 backdrop-blur-sm border border-blue-300/30 rounded-2xl text-blue-200 font-serif text-sm hover:from-blue-500/30 hover:to-indigo-500/30 hover:border-blue-300/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isJudgeLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-blue-300/30 border-t-blue-300 rounded-full animate-spin"></div>
-                        Accessing...
-                      </>
-                    ) : (
-                      <>
-                        <GraduationCap size={16} />
-                        Judge Guest Access 🎓
-                      </>
-                    )}
-                  </button>
-                  
-                  <button
                     onClick={() => navigate('/tell-me-more')}
                     className="w-full text-purple-300/80 font-serif text-sm hover:text-purple-200 transition-colors duration-300 underline decoration-purple-400/50 hover:decoration-purple-300/80 underline-offset-4"
                   >
