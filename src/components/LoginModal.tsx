@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
 
 interface LoginModalProps {
