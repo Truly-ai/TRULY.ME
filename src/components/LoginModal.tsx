@@ -8,15 +8,27 @@ interface LoginModalProps {
   onSignup: (email: string, password: string, name: string) => Promise<void>;
   error?: string | null;
   onClearError?: () => void;
+  initialMode?: 'login' | 'signup';
+  initialName?: string;
 }
 
-function LoginModal({ isOpen, onClose, onLogin, onSignup, error, onClearError }: LoginModalProps) {
-  const [isSignup, setIsSignup] = useState(false);
+function LoginModal({ isOpen, onClose, onLogin, onSignup, error, onClearError, initialMode, initialName }: LoginModalProps) {
+  const [isSignup, setIsSignup] = useState(initialMode === 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName || '');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update modal state when props change
+  useEffect(() => {
+    if (initialMode) {
+      setIsSignup(initialMode === 'signup');
+    }
+    if (initialName) {
+      setName(initialName);
+    }
+  }, [initialMode, initialName]);
 
   if (!isOpen) return null;
 
@@ -48,9 +60,9 @@ function LoginModal({ isOpen, onClose, onLogin, onSignup, error, onClearError }:
   const resetForm = () => {
     setEmail('');
     setPassword('');
-    setName('');
+    setName(initialName || '');
     setShowPassword(false);
-    setIsSignup(false);
+    setIsSignup(initialMode === 'signup' || false);
     onClearError?.();
   };
 

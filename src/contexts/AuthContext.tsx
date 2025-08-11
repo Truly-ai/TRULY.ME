@@ -16,7 +16,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  showLoginModal: () => void;
+  showLoginModal: (options?: { initialMode?: 'login' | 'signup'; initialName?: string }) => void;
   hideLoginModal: () => void;
   authError: string | null;
   clearAuthError: () => void;
@@ -38,12 +38,18 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+interface LoginModalOptions {
+  initialMode?: 'login' | 'signup';
+  initialName?: string;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [loginModalOptions, setLoginModalOptions] = useState<LoginModalOptions>({});
 
   useEffect(() => {
     // Get initial session
@@ -197,14 +203,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const showLoginModal = () => {
+  const showLoginModal = (options: LoginModalOptions = {}) => {
     setIsLoginModalOpen(true);
     setAuthError(null);
+    setLoginModalOptions(options);
   };
 
   const hideLoginModal = () => {
     setIsLoginModalOpen(false);
     setAuthError(null);
+    setLoginModalOptions({});
   };
 
   const clearAuthError = () => {
@@ -240,6 +248,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         onSignup={signup}
         error={authError}
         onClearError={clearAuthError}
+        initialMode={loginModalOptions.initialMode}
+        initialName={loginModalOptions.initialName}
       />
       
       {/* Email Confirmation Modal */}
