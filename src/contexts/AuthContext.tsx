@@ -16,7 +16,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  showLoginModal: (options?: { initialMode?: 'login' | 'signup'; initialName?: string }) => void;
+  showLoginModal: () => void;
   hideLoginModal: () => void;
   authError: string | null;
   clearAuthError: () => void;
@@ -42,7 +42,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [loginModalOptions, setLoginModalOptions] = useState<{ initialMode?: 'login' | 'signup'; initialName?: string }>({});
   const [authError, setAuthError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
@@ -198,15 +197,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const showLoginModal = (options?: { initialMode?: 'login' | 'signup'; initialName?: string }) => {
+  const showLoginModal = () => {
     setIsLoginModalOpen(true);
-    setLoginModalOptions(options || {});
     setAuthError(null);
   };
 
   const hideLoginModal = () => {
     setIsLoginModalOpen(false);
-    setLoginModalOptions({});
     setAuthError(null);
   };
 
@@ -243,8 +240,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         onSignup={signup}
         error={authError}
         onClearError={clearAuthError}
-        initialMode={loginModalOptions.initialMode}
-        initialName={loginModalOptions.initialName}
       />
       
       {/* Email Confirmation Modal */}

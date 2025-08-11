@@ -5,7 +5,7 @@ import LoginButton from './components/LoginButton';
 import NotificationBell from './components/NotificationBell';
 import { useAuth } from './contexts/AuthContext';
 
-type Scene = 'poetry' | 'welcomeChoice' | 'discovery' | 'loading' | 'badge' | 'home';
+type Scene = 'poetry' | 'discovery' | 'loading' | 'badge' | 'signup' | 'home';
 
 interface Badge {
   name: string;
@@ -73,6 +73,7 @@ function App() {
   const [typewriterText, setTypewriterText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [userBadge, setUserBadge] = useState<Badge | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isJudgeFlow, setIsJudgeFlow] = useState(false);
   const [isJudgeLoading, setIsJudgeLoading] = useState(false);
 
@@ -135,8 +136,8 @@ function App() {
               navigate('/home');
             }, 1500);
           } else {
-            // Not authenticated - show welcome choice
-            setCurrentScene('welcomeChoice');
+            // Not authenticated - show login prompt
+            setShowLoginPrompt(true);
           }
         }, 2000);
       }
@@ -147,15 +148,33 @@ function App() {
 
   // Handle authentication changes
   useEffect(() => {
-    if (isAuthenticated && currentScene !== 'badge') {
-      // User is authenticated and not in the middle of badge generation
-      // Go directly to home
-      setCurrentScene('home');
-      setTimeout(() => {
-        navigate('/home');
-      }, 1500);
+    if (isAuthenticated && (showLoginPrompt || isJudgeFlow)) {
+      // User just logged in
+      if (isJudgeFlow) {
+        // Judge flow - always go through discovery
+        setShowLoginPrompt(false);
+        setCurrentScene('discovery');
+        setIsTyping(true);
+      } else {
+        // Regular user flow - check if they completed onboarding
+        const hasCompletedOnboarding = localStorage.getItem(`onboarding_completed_${user?.id}`);
+        
+        if (hasCompletedOnboarding) {
+          // Returning user - go directly to home with sanctuary message
+          setShowLoginPrompt(false);
+          setCurrentScene('home');
+          setTimeout(() => {
+            navigate('/home');
+          }, 1500);
+        } else {
+          // New user - start discovery flow
+          setShowLoginPrompt(false);
+          setCurrentScene('discovery');
+          setIsTyping(true);
+        }
+      }
     }
-  }, [isAuthenticated, currentScene, navigate]);
+  }, [isAuthenticated, user, showLoginPrompt, isJudgeFlow, navigate]);
 
   // Typewriter effect for questions
   useEffect(() => {
@@ -178,12 +197,26 @@ function App() {
     return () => clearInterval(typeInterval);
   }, [currentQuestion, currentScene, isTyping]);
 
-  const handleStartDiscoveryFlow = () => {
+  const startDiscoveryFlow = () => {
+    setShowLoginPrompt(false);
     setCurrentScene('discovery');
     setIsTyping(true);
+    setIsJudgeFlow(false);
   };
 
-  const { showLoginModal } = useAuth();
+  const startJudgeFlow = async () => {
+    setIsJudgeLoading(true);
+    
+    try {
+      // Log in as judge
+      await login('judgeexample@gmail.com', 'Judge@23');
+      setIsJudgeFlow(true);
+      // The useEffect will handle the rest of the flow
+    } catch (error) {
+      console.error('Judge login failed:', error);
+      setIsJudgeLoading(false);
+    }
+  };
 
   const generateBadge = (answers: string[]): Badge => {
     const combinedText = answers.join(' ').toLowerCase();
@@ -244,19 +277,13 @@ function App() {
       // Save completion status and badge
       localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
       localStorage.setItem(`user_badge_${user.id}`, JSON.stringify(userBadge));
-      
-      // Go to home after saving
-      setCurrentScene('home');
-      setTimeout(() => {
-        navigate('/home');
-      }, 1500);
-    } else {
-      // User needs to sign up - show login modal in signup mode with badge name
-      showLoginModal({
-        initialMode: 'signup',
-        initialName: userBadge?.name || ''
-      });
     }
+    
+    // Go to home with sanctuary message
+    setCurrentScene('home');
+    setTimeout(() => {
+      navigate('/home');
+    }, 1500);
   };
 
   const renderLine = (line: string, index: number) => {
@@ -315,11 +342,26 @@ function App() {
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 flex flex-col">
       <div className="flex-1 flex items-center justify-center">
         {/* Top Navigation - Only show on specific scenes */}
-        {(currentScene === 'welcomeChoice' || currentScene === 'discovery' || currentScene === 'loading' || currentScene === 'badge') && (
+        {(currentScene === 'discovery' || currentScene === 'loading' || currentScene === 'badge') && (
           <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
             <NotificationBell />
             <LoginButton />
           </div>
+        )}
+
+        {/* Bolt Badge - DEBUG: Now shows on all pages with full opacity */}
+        {showBoltBadge && (currentScene === 'poetry' || showLoginPrompt) && (
+          <button
+            onClick={() => window.open('https://bolt.new', '_blank')}
+            className="fixed bottom-6 right-6 z-30 opacity-100 hover:opacity-100 transition-opacity duration-300 hover:scale-105 transform transition-transform duration-300"
+            title="Powered by Bolt.new"
+          >
+            <img 
+              src="/bolt-badge.png.png" 
+              alt="Powered by Bolt.new" 
+              className="w-[90px] h-auto"
+            />
+          </button>
         )}
 
         {/* Dynamic Background */}
@@ -385,14 +427,18 @@ function App() {
             </div>
           )}
 
-          {/* Welcome Choice Scene */}
-          {currentScene === 'welcomeChoice' && (
-            <div className="w-full flex flex-col items-center justify-center animate-fade-in">
-              <div className="max-w-md mx-auto text-center">
+          {/* Login Prompt Modal */}
+          {showLoginPrompt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+              
+              {/* Modal */}
+              <div className="relative w-full max-w-md bg-gradient-to-br from-purple-900/95 via-indigo-900/95 to-blue-900/95 backdrop-blur-lg border border-purple-300/30 rounded-3xl p-8 shadow-2xl animate-fade-in">
                 {/* Header */}
-                <div className="mb-8">
-                  <Sparkles size={64} className="mx-auto mb-6 text-purple-300/80 animate-pulse-gentle" />
-                  <h2 className="text-3xl font-serif text-purple-100 mb-4 glow-text">
+                <div className="text-center mb-8">
+                  <Sparkles size={48} className="mx-auto mb-4 text-purple-300/80 animate-pulse-gentle" />
+                  <h2 className="text-2xl font-serif text-purple-100 mb-4 glow-text">
                     Ready to begin?
                   </h2>
                   <p className="text-lg font-serif text-purple-200/80 leading-relaxed">
@@ -403,7 +449,7 @@ function App() {
                 {/* Action Buttons */}
                 <div className="space-y-4">
                   <button
-                    onClick={handleStartDiscoveryFlow}
+                    onClick={startDiscoveryFlow}
                     className="w-full py-4 bg-gradient-to-r from-purple-500/40 to-pink-500/40 backdrop-blur-sm border border-purple-300/40 rounded-2xl text-purple-100 font-cursive text-lg hover:from-purple-500/50 hover:to-pink-500/50 hover:border-purple-300/60 transition-all duration-300 glow-button"
                   >
                     I'm new here, let's discover ✨
