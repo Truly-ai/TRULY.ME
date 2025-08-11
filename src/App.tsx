@@ -62,7 +62,7 @@ const badges: Record<string, Badge> = {
 
 function App() {
   const navigate = useNavigate();
-  const { isAuthenticated, user, isLoading, login } = useAuth();
+  const { isAuthenticated, user, isLoading, showLoginModal } = useAuth();
   const [fadeIn, setFadeIn] = useState(false);
   const [currentScene, setCurrentScene] = useState<Scene>('poetry');
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
@@ -74,8 +74,6 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [userBadge, setUserBadge] = useState<Badge | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [isJudgeFlow, setIsJudgeFlow] = useState(false);
-  const [isJudgeLoading, setIsJudgeLoading] = useState(false);
 
   const poetryLines = [
     "You are not late.",
@@ -130,13 +128,13 @@ function App() {
           }
           
           if (isAuthenticated) {
-            // Existing user - go directly to home with sanctuary message
+            // Existing user - go directly to home
             setCurrentScene('home');
             setTimeout(() => {
               navigate('/home');
             }, 1500);
           } else {
-            // Not authenticated - show login prompt
+            // Not authenticated - show "Ready to begin" modal
             setShowLoginPrompt(true);
           }
         }, 2000);
@@ -148,33 +146,15 @@ function App() {
 
   // Handle authentication changes
   useEffect(() => {
-    if (isAuthenticated && (showLoginPrompt || isJudgeFlow)) {
+    if (isAuthenticated && user) {
       // User just logged in
-      if (isJudgeFlow) {
-        // Judge flow - always go through discovery
-        setShowLoginPrompt(false);
-        setCurrentScene('discovery');
-        setIsTyping(true);
-      } else {
-        // Regular user flow - check if they completed onboarding
-        const hasCompletedOnboarding = localStorage.getItem(`onboarding_completed_${user?.id}`);
-        
-        if (hasCompletedOnboarding) {
-          // Returning user - go directly to home with sanctuary message
-          setShowLoginPrompt(false);
-          setCurrentScene('home');
-          setTimeout(() => {
-            navigate('/home');
-          }, 1500);
-        } else {
-          // New user - start discovery flow
-          setShowLoginPrompt(false);
-          setCurrentScene('discovery');
-          setIsTyping(true);
-        }
-      }
+      setShowLoginPrompt(false);
+      setCurrentScene('home');
+      setTimeout(() => {
+        navigate('/home');
+      }, 1500);
     }
-  }, [isAuthenticated, user, showLoginPrompt, isJudgeFlow, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Typewriter effect for questions
   useEffect(() => {
@@ -201,21 +181,6 @@ function App() {
     setShowLoginPrompt(false);
     setCurrentScene('discovery');
     setIsTyping(true);
-    setIsJudgeFlow(false);
-  };
-
-  const startJudgeFlow = async () => {
-    setIsJudgeLoading(true);
-    
-    try {
-      // Log in as judge
-      await login('judgeexample@gmail.com', 'Judge@23');
-      setIsJudgeFlow(true);
-      // The useEffect will handle the rest of the flow
-    } catch (error) {
-      console.error('Judge login failed:', error);
-      setIsJudgeLoading(false);
-    }
   };
 
   const generateBadge = (answers: string[]): Badge => {
@@ -273,17 +238,11 @@ function App() {
   };
 
   const handleBadgeComplete = () => {
-    if (user) {
-      // Save completion status and badge
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-      localStorage.setItem(`user_badge_${user.id}`, JSON.stringify(userBadge));
-    }
-    
-    // Go to home with sanctuary message
-    setCurrentScene('home');
-    setTimeout(() => {
-      navigate('/home');
-    }, 1500);
+    // Show signup modal with pre-filled badge name
+    showLoginModal({
+      initialMode: 'signup',
+      initialName: userBadge?.name || ''
+    });
   };
 
   const renderLine = (line: string, index: number) => {
@@ -335,9 +294,6 @@ function App() {
     );
   };
 
-  // DEBUG: Force badge to show on all pages with full opacity
-  const showBoltBadge = false;
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 flex flex-col">
       <div className="flex-1 flex items-center justify-center">
@@ -347,21 +303,6 @@ function App() {
             <NotificationBell />
             <LoginButton />
           </div>
-        )}
-
-        {/* Bolt Badge - DEBUG: Now shows on all pages with full opacity */}
-        {showBoltBadge && (currentScene === 'poetry' || showLoginPrompt) && (
-          <button
-            onClick={() => window.open('https://bolt.new', '_blank')}
-            className="fixed bottom-6 right-6 z-30 opacity-100 hover:opacity-100 transition-opacity duration-300 hover:scale-105 transform transition-transform duration-300"
-            title="Powered by Bolt.new"
-          >
-            <img 
-              src="/bolt-badge.png.png" 
-              alt="Powered by Bolt.new" 
-              className="w-[90px] h-auto"
-            />
-          </button>
         )}
 
         {/* Dynamic Background */}
@@ -455,7 +396,12 @@ function App() {
                     I'm new here, let's discover ✨
                   </button>
                   
-                  <LoginButton />
+                  <button
+                    onClick={() => showLoginModal()}
+                    className="w-full py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-purple-100 font-cursive text-lg hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+                  >
+                    I already have an account
+                  </button>
                   
                   <button
                     onClick={() => navigate('/tell-me-more')}
@@ -619,7 +565,7 @@ function App() {
                   onClick={handleBadgeComplete}
                   className="px-8 py-4 bg-gradient-to-r from-purple-500/30 to-pink-500/30 backdrop-blur-sm border border-purple-300/40 rounded-full text-purple-100 font-cursive text-lg hover:from-purple-500/40 hover:to-pink-500/40 hover:border-purple-300/60 transition-all duration-300 hover:scale-105 glow-button"
                 >
-                  Enter Your Sanctuary
+                  Create Your Account
                 </button>
               </div>
             </div>
